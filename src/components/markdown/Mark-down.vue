@@ -54,9 +54,7 @@ export default {
     };
   },
   methods: {
-    save(e) {
-      console.log(e);
-    },
+    save() {},
     change(e, res) {
       // console.log(e);
       this.$emit("getContent", e);

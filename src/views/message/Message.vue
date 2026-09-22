@@ -1,6 +1,6 @@
 <template>
-  <div class="main">
-    <div class="comment-view">
+  <div class="message-page">
+    <div class="comment-view" v-loading="loading">
       <Message-show :data="messages"></Message-show>
       <el-backtop target=".comment-view" :right="40" :bottom="60">
         <div class="back-top">UP</div>
@@ -17,15 +17,24 @@ export default {
   data() {
     return {
       page_index: 2,
+      loading: false,
     };
   },
   methods: {
     async getAllMessage() {
-      const { data } = await this.$http.getAllMessage();
-      data.data.some((item) => {
-        item.comment = marked.parse(item.content);
-      });
-      this.$store.commit("getAllMessage", data.data);
+      this.loading = true;
+      try {
+        const { data } = await this.$http.getAllMessage();
+        const messages = Array.isArray(data.data) ? data.data : [];
+        messages.forEach((item) => {
+          item.comment = marked.parse(item.content);
+        });
+        this.$store.commit("getAllMessage", messages);
+      } catch (_) {
+        this.$store.commit("getAllMessage", []);
+      } finally {
+        this.loading = false;
+      }
     },
   },
   computed: {
@@ -53,15 +62,19 @@ export default {
 
 <style lang="less" scoped>
 @import url("@/assets/less/index.less");
-.main {
-  width: 1496px !important;
-  background: none !important;
-  padding: 0;
+.message-page {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: @main-height;
+  margin-top: 20px;
   .column();
   align-items: center;
   .comment-view {
-    width: 1012px;
-    height: 600px;
+    width: 100%;
+    min-height: @main-height;
+    height: auto;
+    max-height: @main-height;
     overflow: scroll;
     .minScroller();
     border-radius: 10px;
@@ -81,5 +94,8 @@ export default {
       color: #ffffff;
     }
   }
+}
+@media (max-width: 768px) {
+  .message-page .comment-view { max-height: none; padding: 14px; }
 }
 </style>

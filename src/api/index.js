@@ -15,7 +15,7 @@ import {
   searchByInput,
   searchByTime,
 } from "./search.js";
-import { getAllComment, addCommentOne, addCommentTwo } from "./comment.js";
+import { getAllComment, addCommentOne, addCommentTwo, deleteComment } from "./comment.js";
 export default {
   register,
   login,
@@ -37,4 +37,5 @@ export default {
   getAllComment,
   addCommentOne,
   addCommentTwo,
+  deleteComment,
 };

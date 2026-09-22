@@ -35,7 +35,9 @@
             <i class="el-icon-loading"></i
             ><span style="margin-left: 5px">支持markdown语法</span>
           </div>
-          <div class="sumbit" @click="addMessage">发布留言</div>
+          <div :class="['sumbit', { disabled: submitting }]" @click="addMessage">
+            {{ submitting ? "正在发布" : "发布留言" }}
+          </div>
         </div>
       </div>
     </div>
@@ -73,10 +75,12 @@ export default {
     return {
       name: "",
       textarea: "",
+      submitting: false,
     };
   },
   methods: {
     async addMessage() {
+      if (this.submitting) return;
       if (this.name === "") {
         return this.$message.warning({
           showClose: true,
@@ -96,16 +100,23 @@ export default {
         content: this.textarea,
         imgColor: this.produceColor(),
       });
-      const { data } = await this.$http.postMessage(new_comment);
-
-      if (data.status === 0) {
-        data.data.comment = marked.parse(data.data.content);
-        console.log(data.data);
-        this.$store.commit("addMessage", data.data);
-        this.$message.success({
-          showClose: true,
-          message: "发布成功",
-        });
+      this.submitting = true;
+      try {
+        const { data } = await this.$http.postMessage(new_comment);
+        if (data.status === 0) {
+          data.data.comment = marked.parse(data.data.content);
+          this.$store.commit("addMessage", data.data);
+          this.name = "";
+          this.textarea = "";
+          this.$message.success({
+            showClose: true,
+            message: data.tip || "发布成功",
+          });
+        }
+      } catch (_) {
+        // 全局请求拦截器已反馈失败原因。
+      } finally {
+        this.submitting = false;
       }
     },
     produceColor() {
@@ -143,7 +154,7 @@ export default {
 @import url("@/assets/less/index.less");
 @import url("../../assets//less/markdown-style.css");
 .edit-view {
-  width: 972px;
+  width: 100%;
   min-height: 260px;
   padding-bottom: 20px;
   border-bottom: 1px solid #eee;
@@ -164,7 +175,7 @@ export default {
     }
   }
   .edit-box {
-    width: 902px;
+    width: calc(100% - 70px);
     min-height: 230px;
     // border: 1px solid black;
     border-radius: 4px;
@@ -178,13 +189,13 @@ export default {
       margin-bottom: 10px;
     }
     .edit-center {
-      width: 902px;
+      width: 100%;
       min-height: 138px;
       overflow: hidden;
       margin-bottom: 10px;
     }
     .edit-bottom {
-      width: 902px;
+      width: 100%;
       height: 42px;
       .row();
       align-items: center;
@@ -208,13 +219,20 @@ export default {
         &:hover {
           opacity: 0.8;
         }
+        &.disabled { cursor: not-allowed; opacity: 0.65; }
       }
     }
   }
 }
+@media (max-width: 640px) {
+  .edit-view { gap: 10px; }
+  .edit-view .user-img { width: 40px; height: 40px; }
+  .edit-view .edit-box { width: calc(100% - 50px); }
+  .edit-view .edit-box .edit-top .name { width: 100%; }
+}
 .show-item {
   margin-top: 30px;
-  width: 972px;
+  width: 100%;
   min-height: 134px;
   border-radius: 4px;
   border-bottom: 1px solid #eee;
@@ -235,12 +253,12 @@ export default {
     }
   }
   .show-main {
-    width: 902px;
+    width: calc(100% - 70px);
     min-height: 134px;
     margin-bottom: 20px;
     .show-head {
       padding-left: 15px;
-      width: 902px;
+      width: 100%;
       height: 40px;
       border: 1px solid #dcdfe6;
       font-size: 14px;
@@ -254,13 +272,18 @@ export default {
       -webkit-line-clamp: 1; //行数
     }
     .show-box {
-      width: 902px;
+      width: 100%;
       min-height: 64px;
       padding: 5px 15px;
       border-radius: 0 0 4px 4px;
       border: 1px solid #dcdfe6;
     }
   }
+}
+@media (max-width: 640px) {
+  .show-item { gap: 10px; }
+  .show-item .user-img { width: 40px; height: 40px; }
+  .show-item .show-main { width: calc(100% - 50px); }
 }
 .tip {
   margin-top: 30px;

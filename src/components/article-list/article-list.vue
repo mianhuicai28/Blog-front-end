@@ -1,5 +1,5 @@
 <template>
-  <div ref="show">
+    <div ref="show" class="article-list" v-loading="loading">
     <div class="show-bar">
       <div class="tab-view">
         <p class="isAct">
@@ -21,7 +21,7 @@
             <el-option label="全文" value="content"></el-option>
             <el-option label="标题" value="title"></el-option>
           </el-select>
-          <el-button slot="append" @click="search">搜索</el-button>
+          <el-button slot="append" :loading="searching" @click="search">搜索</el-button>
         </el-input>
       </div>
     </div>
@@ -39,7 +39,7 @@
     <div class="show-list">
       <div
         class="show-item"
-        v-for="item in articles"
+        v-for="item in pagedArticles"
         :key="item.index"
         @click="toDetail(item)"
       >
@@ -55,10 +55,9 @@
             </p>
             <div class="bottom-show">
               <div class="tags">
-                <div class="tag" v-for="(tag, index) in item.tags" :key="index">
-                  <span></span>
-                  <p>{{ tag }}</p>
-                </div>
+                <span class="tag" v-for="tag in item.tags" :key="tag">
+                  # {{ tag }}
+                </span>
               </div>
               <p class="time">{{ item.time }}</p>
             </div>
@@ -66,33 +65,47 @@
         </div>
       </div>
 
-      <div
-        style="margin-top: 100px"
-        v-if="
-          $store.state.ArticleIsAll === false &&
-          $store.state.searchArticles.length === 0
-        "
-      >
-        <div v-if="$store.state.searchArticles.length === 0">
-          <el-empty description="暂无内容"></el-empty>
-        </div>
+      <div class="empty-view" v-if="articles.length === 0">
+        <el-empty description="暂无文章，登录后发布第一篇吧"></el-empty>
       </div>
     </div>
+    <el-pagination
+      v-if="articles.length > pageSize"
+      class="article-pagination"
+      background
+      layout="prev, pager, next"
+      :page-size="pageSize"
+      :total="articles.length"
+      :current-page.sync="currentPage"
+    />
   </div>
 </template>
 
 <script>
 export default {
   props: {
-    articles: { type: Array },
+    articles: { type: Array, default: () => [] },
+    loading: { type: Boolean, default: false },
   },
   data() {
     return {
       input: "",
       select: "title",
       isSearch: false,
-      searchResult: [],
+      searchResult: { tip: "", data: [] },
+      currentPage: 1,
+      pageSize: 6,
+      searching: false,
     };
+  },
+  computed: {
+    pagedArticles() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.articles.slice(start, start + this.pageSize);
+    },
+  },
+  watch: {
+    articles() { this.currentPage = 1; },
   },
   methods: {
     toDetail(e) {
@@ -115,12 +128,18 @@ export default {
         select: this.select,
         input: this.input,
       });
-      const { data } = await this.$http.searchByInput(query);
-      this.isSearch = true;
-      this.$store.commit("toSearch", false);
-      this.$store.commit("searchArticles", data.data);
-      this.searchResult = data;
-      console.log(data);
+      this.searching = true;
+      try {
+        const { data } = await this.$http.searchByInput(query);
+        this.isSearch = true;
+        this.$store.commit("toSearch", false);
+        this.$store.commit("searchArticles", data.data || []);
+        this.searchResult = { ...data, data: data.data || [] };
+      } catch (_) {
+        // 全局请求拦截器已提示错误；保留当前列表，避免失败后清空用户正在看的内容。
+      } finally {
+        this.searching = false;
+      }
     },
     returnAll() {
       this.isSearch = false;
@@ -136,7 +155,7 @@ export default {
   .row();
   align-items: center;
   justify-content: space-between;
-  width: 916px;
+  width: 100%;
   height: 50px;
   margin-bottom: 12px;
   // border-bottom: 2px solid rgba(255, 255, 255, 0.5);
@@ -156,7 +175,7 @@ export default {
     }
   }
   .search-view {
-    width: 450px;
+    width: min(450px, 70%);
     /deep/ .el-select .el-input {
       width: 100px;
     }
@@ -164,6 +183,10 @@ export default {
       text-align: left;
     }
   }
+}
+@media (max-width: 1250px) {
+  .show-bar .tab-view { display: none; }
+  .show-bar .search-view { width: 100%; }
 }
 .back-top {
   position: fixed;
@@ -183,20 +206,23 @@ export default {
   .show-item {
     width: 100%;
     min-height: 150px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: 4px;
+    background-color: #fff;
+    border-radius: 14px;
     margin-bottom: 20px;
-    border-bottom: 1px solid #dfe0e2;
+    border: 1px solid #e8ecf3;
+    padding: 0 20px;
+    transition: transform .2s ease, box-shadow .2s ease;
     cursor: pointer;
     .column();
     align-items: center;
+    &:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(35, 50, 78, .09); }
     &:last-child {
       margin-bottom: 0px;
     }
     .top-show {
       .row();
       justify-content: space-between;
-      width: 916px;
+      width: 100%;
       padding: 10px 0;
       border-bottom: 1px solid #dfe0e2;
       .title {
@@ -225,7 +251,7 @@ export default {
 
     .center-show {
       .row();
-      width: 916px;
+      width: 100%;
       justify-content: space-between;
       align-items: center;
       padding: 10px 0;
@@ -233,8 +259,10 @@ export default {
         .column();
         align-items: center;
         justify-content: space-between;
-        width: 916px;
-        height: 130px;
+        width: 100%;
+        min-height: 130px;
+        height: auto;
+        gap: 16px;
         .info {
           align-self: flex-start;
           display: -webkit-box;
@@ -250,32 +278,34 @@ export default {
         .bottom-show {
           .row();
           align-items: center;
-          width: 916px;
+          width: 100%;
           justify-content: space-between;
           .tags {
-            .row();
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
             align-items: center;
-            width: 600px !important;
-            height: 18px;
-            overflow: hidden;
-            // text-overflow: ellipsis;
+            gap: 8px;
+            min-width: 0;
+            padding-right: 16px;
             .tag {
-              .row();
+              display: inline-flex;
               align-items: center;
-              padding-right: 10px;
-              font-size: 14px;
-              color: #86909c;
-              span {
-                display: block;
-                margin-right: 10px;
-                width: 4px;
-                height: 18px;
-                background-color: #eeef9e;
-              }
+              max-width: 100%;
+              padding: 4px 9px;
+              border-radius: 999px;
+              background: #fff7df;
+              color: #a8760c;
+              font-size: 12px;
+              font-weight: 600;
+              line-height: 1.2;
+              white-space: nowrap;
             }
           }
           .time {
+            flex: 0 0 auto;
             min-width: 120px;
+            text-align: right;
             font-size: 14px;
             color: #86909c;
           }
@@ -288,5 +318,17 @@ export default {
       }
     }
   }
+}
+.article-list { width: 100%; }
+.empty-view { padding: 60px 0; }
+.article-pagination { display: flex; justify-content: center; margin-top: 24px; }
+@media (max-width: 768px) {
+  .show-bar { height: auto; align-items: stretch; flex-direction: column; gap: 12px; }
+  .show-bar .search-view { width: 100%; }
+  .show-list .show-item { padding: 0 14px; }
+  .show-list .show-item .center-show .main-show { height: auto; min-height: 130px; }
+  .show-list .show-item .center-show .main-show .bottom-show { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .show-list .show-item .center-show .main-show .bottom-show .tags { width: 100%; padding-right: 0; }
+  .show-list .show-item .center-show .main-show .bottom-show .time { align-self: flex-end; min-width: auto; font-size: 12px; }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="detail-page">
     <div class="show-view">
       <!-- show -->
       <div class="main-view">
@@ -81,12 +81,10 @@
               </div>
               <div class="one-bottom">
                 <div class="one-time">{{ one.time }}</div>
-                <el-button
-                  type="text"
-                  size="mini"
-                  @click="addToName(one.master, one._id)"
-                  >回复</el-button
-                >
+                <div>
+                  <el-button type="text" size="mini" @click="addToName(one.master, one._id)">回复</el-button>
+                  <el-button v-if="canManageComments" type="text" size="mini" class="danger-action" @click="removeComment(one._id)">删除</el-button>
+                </div>
               </div>
               <template>
                 <div
@@ -107,7 +105,7 @@
                     </div>
                   </div>
                   <div class="two-bottom">
-                    <div class="two-time">2022-04-05</div>
+                    <div class="two-time">{{ two.time }}</div>
                     <el-button
                       type="text"
                       size="mini"
@@ -157,7 +155,7 @@
               </template>
             </div>
             <div class="intro">{{ author.intro }}</div>
-            <div class="time"><span>发布时间：</span>{{ item.time }}</div>
+            <div class="time"><span>发布时间：</span>{{ item && item.time }}</div>
           </template>
         </div>
       </div>
@@ -189,6 +187,12 @@ export default {
       comments: [],
     };
   },
+  computed: {
+    canManageComments() {
+      const user = this.$store.state.userInfo;
+      return Boolean(user && user._id && this.item && String(user._id) === String(this.item.author_id));
+    },
+  },
   methods: {
     toComment() {
       document.querySelector("#comment1").scrollIntoView();
@@ -200,6 +204,18 @@ export default {
       this.to_name = name;
       this.to_id = id;
       this.toComment();
+    },
+    async removeComment(id) {
+      try {
+        await this.$confirm("删除后无法恢复，确定删除这条评论吗？", "删除评论", { type: "warning" });
+        const { data } = await this.$http.deleteComment(this.$qs.stringify({ id }));
+        if (data.status === 0) {
+          this.$message.success(data.tip);
+          this.getAllComment();
+        }
+      } catch (error) {
+        if (error !== "cancel") this.$message.error("删除失败");
+      }
     },
     async addComment() {
       if (this.master === "") {
@@ -253,6 +269,7 @@ export default {
       this.getAllComment();
       this.to_name = "";
       this.to_id = "";
+      this.comment_content = "";
       // console.log("this.to_name :>> ", this.to_name);
       // console.log("this.to_id :>> ", this.to_id);
     },
@@ -290,7 +307,7 @@ export default {
       // console.log(data);
       if (data.status === 0) {
         this.comments = data.data.reverse();
-      }
+      } else this.comments = [];
     },
   },
   created() {
@@ -695,5 +712,128 @@ export default {
       }
     }
   }
+}
+
+// Responsive detail layout. The legacy rules above are scoped under `.main`;
+// this shell replaces that fixed-position layout without changing the markup.
+.detail-page {
+  width: 100%;
+  margin-top: 20px;
+  min-width: 0;
+  .show-view {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+    width: 100%;
+    height: @main-height;
+    margin: 0 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: start;
+    .minScroller();
+  }
+  .main-view {
+    min-width: 0;
+    padding: clamp(18px, 3vw, 34px);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 14px 40px rgba(35, 50, 78, .08);
+  }
+  .title {
+    margin: 0 0 20px;
+    padding: 0 0 14px 14px;
+    border-bottom: 1px solid #edf0f5;
+    border-left: 4px solid @orange;
+    color: #26354f;
+    word-break: break-word;
+  }
+  .main-view > .intro,
+  .content {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid #e5e9f1;
+    border-radius: 10px;
+    word-break: break-word;
+  }
+  .main-view > .intro { margin-bottom: 20px; color: #66738a; background: #fafbfe; }
+  .content { margin-bottom: 50px; overflow-x: auto; }
+  .content /deep/ img { max-width: 100%; height: auto; }
+  .comment-view,
+  .edit-view,
+  .edit-box,
+  .edit-center,
+  .edit-bottom,
+  .one-comment-view { width: 100%; }
+  .edit-view { padding-bottom: 20px; border-bottom: 1px solid #edf0f5; }
+  .edit-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .edit-top .name,
+  .edit-top .aite { width: 100%; }
+  .edit-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 5px;
+    border: 1px solid #dcdfe6;
+    border-radius: 6px;
+  }
+  .edit-bottom .sumbit {
+    min-width: 88px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    background: #4f6fbd;
+    color: #fff;
+    text-align: center;
+    cursor: pointer;
+  }
+  .one-comment-view { padding-top: 20px; }
+  .one-item { margin-bottom: 18px; padding: 16px; border: 1px solid #edf0f5; border-radius: 12px; }
+  .one-view { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 12px; }
+  .one-name,
+  .two-name p { padding: 6px; border-radius: 6px; background: #f3f5f9; text-align: center; overflow: hidden; text-overflow: ellipsis; }
+  .one-comment,
+  .two-comment { min-width: 0; padding: 8px 10px; word-break: break-word; }
+  .one-bottom { display: flex; justify-content: space-between; align-items: center; margin-left: 104px; color: #98a1b2; }
+  .danger-action { color: #f56c6c; }
+  .two-comment-view { margin: 12px 0 0 104px; padding: 12px; border-radius: 10px; background: #fafbfe; }
+  .two-view { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; }
+  .two-name { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+  .two-name p { width: 64px; margin: 0; }
+  .two-bottom { display: flex; justify-content: space-between; align-items: center; margin-left: 160px; color: #98a1b2; }
+  .right-view { position: sticky; top: 0; width: 100%; }
+  .right-view .class-view,
+  .right-view .info-view { width: 100%; padding: 20px; border-radius: 14px; background: #fff; box-shadow: 0 12px 30px rgba(35, 50, 78, .07); }
+  .right-view .class-view { margin-bottom: 16px; }
+  .class-view > p { margin: 0 0 10px; color: @orange; font-weight: 700; }
+  .class-view .row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .class-item { padding: 5px 10px; border-radius: 20px; background: #fff7df; color: #a8760c; }
+  .main-info { display: flex; align-items: center; gap: 12px; }
+  .main-info img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #eef1f6; }
+  .author-name { font-size: 18px; font-weight: 700; }
+  .info-view .intro { margin: 16px 0; color: #66738a; line-height: 1.7; word-break: break-word; }
+  .info-view .time { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: #8c97aa; }
+  .info-view .time span { color: @orange; }
+  .to-comment { position: fixed; right: 28px; bottom: 110px; z-index: 10; color: #4f6fbd; cursor: pointer; }
+  .back-top { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: @orange; color: #fff; }
+}
+
+@media (max-width: 900px) {
+  .detail-page .show-view { grid-template-columns: 1fr; height: auto; overflow: visible; }
+  .detail-page .right-view { position: static; grid-row: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-page .right-view .class-view { margin: 0; }
+  .detail-page .main-view { grid-row: 2; }
+}
+@media (max-width: 600px) {
+  .detail-page .right-view { grid-template-columns: 1fr; }
+  .detail-page .edit-top { grid-template-columns: 1fr; }
+  .detail-page .one-view { grid-template-columns: 1fr; }
+  .detail-page .one-name { width: fit-content; }
+  .detail-page .one-bottom { margin-left: 0; }
+  .detail-page .two-comment-view { margin-left: 20px; }
+  .detail-page .two-view { grid-template-columns: 1fr; }
+  .detail-page .two-bottom { margin-left: 0; }
+  .detail-page .edit-bottom > div:first-child { display: none; }
+  .detail-page .edit-bottom { justify-content: flex-end; }
 }
 </style>

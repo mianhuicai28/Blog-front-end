@@ -37,12 +37,8 @@ export default {
     };
   },
   methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    },
+    handleOpen() {},
+    handleClose() {},
   },
 };
 </script>
@@ -50,13 +46,17 @@ export default {
 <style lang="less" scoped>
 @import url("@/assets/less/index.less");
 .me-menu {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 200px;
-  height: 600px;
+  position: relative;
+  width: 100%;
+  height: 100%;
   border-radius: 10px 0 0 10px;
   background-color: #626878;
   overflow: hidden;
+  /deep/ .el-menu { height: 100%; border-right: 0; }
+}
+@media (max-width: 768px) {
+  .me-menu { position: relative; width: 100%; height: auto; border-radius: 12px 12px 0 0; }
+  .me-menu /deep/ .el-menu { display: flex; }
+  .me-menu /deep/ .el-menu-item { flex: 1; text-align: center; }
 }
 </style>

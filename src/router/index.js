@@ -2,16 +2,16 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import gtMessage from "../utils/message";
 
-// 按需导入需要的组件
-import Index from "../views/index/Index.vue";
-import Article from "../views/article/Article.vue";
-import Message from "../views/message/Message.vue";
-import Me from "../views/me/Me.vue";
-import Sign from "../views/sign/sign.vue";
-import Login from "../views/login/Login.vue";
-import Article_show from "../views/article-show/Article-show.vue";
-import MyInfo from "../components/myModule/MyInfo.vue";
-import MyArticle from "../components/myModule/MyArticle.vue";
+// 页面按需加载，降低首屏包体积
+const Index = () => import("../views/index/Index.vue");
+const Article = () => import("../views/article/Article.vue");
+const Message = () => import("../views/message/Message.vue");
+const Me = () => import("../views/me/Me.vue");
+const Sign = () => import("../views/sign/sign.vue");
+const Login = () => import("../views/login/Login.vue");
+const ArticleShow = () => import("../views/article-show/Article-show.vue");
+const MyInfo = () => import("../components/myModule/MyInfo.vue");
+const MyArticle = () => import("../components/myModule/MyArticle.vue");
 Vue.use(VueRouter);
 
 const routes = [
@@ -33,7 +33,7 @@ const routes = [
   {
     path: "/article_show",
     name: "detail",
-    component: Article_show,
+    component: ArticleShow,
   },
   {
     path: "/message",
@@ -69,35 +69,24 @@ const routes = [
     name: "login",
     component: Login,
   },
+  {
+    path: "*",
+    redirect: "/index",
+  },
 ];
 const router = new VueRouter({
   routes,
 });
 router.beforeEach((to, from, next) => {
   const token = sessionStorage.getItem("accessToken");
-  // console.log("token :>> ", token);
-  if (
-    to.name != "login" &&
-    to.name != "message" &&
-    to.name != "index" &&
-    to.name != "detail" &&
-    !token
-  ) {
+  const authRequired = to.matched.some((record) => record.meta.authRequired);
+  if (authRequired && !token) {
     gtMessage.warning({
       showClose: true,
       message: "登录后才可进入该模块",
     });
     next({ name: "login" });
-  } else {
-    // console.log("to :>> ", to);
-    // console.log("form :>> ", from);
-    next();
-  }
-  // if (!to.meta.authRequired && !token) {
-  //   next({ name: "login" });
-  // } else {
-  //   next();
-  // }
+  } else next();
 });
 // 防止重复同一个路由;
 const originalPush = VueRouter.prototype.push;

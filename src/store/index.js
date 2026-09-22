@@ -56,12 +56,10 @@ export default new Vuex.Store({
       state.ArticleIsAll = data;
     },
     getAllArticle(state, data) {
-      data.reverse();
-      state.articles = data;
+      state.articles = Array.isArray(data) ? [...data].reverse() : [];
     },
     getAllMessage(state, data) {
-      data.reverse();
-      state.messages = data;
+      state.messages = Array.isArray(data) ? [...data].reverse() : [];
     },
     addMessage(state, data) {
       state.messages.unshift(data);
@@ -70,8 +68,7 @@ export default new Vuex.Store({
       state.searchArticles.unshift(data);
     },
     searchArticles(state, data) {
-      data.reverse();
-      state.searchArticles = data;
+      state.searchArticles = Array.isArray(data) ? [...data].reverse() : [];
     },
   },
   actions: {},

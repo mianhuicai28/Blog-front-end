@@ -23,3 +23,6 @@ export const addCommentTwo = (data) => {
     data,
   });
 };
+export const deleteComment = (data) => {
+  return request({ method: "post", url: "/comment/deleteComment", data });
+};

@@ -37,12 +37,8 @@ export default {
     };
   },
   methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
-    },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    },
+    handleOpen() {},
+    handleClose() {},
     async searchByClass_public(e) {
       this.$store.commit("toSearch", false);
       const query = this.$qs.stringify({
@@ -64,7 +60,6 @@ export default {
     async getPrivateArticle() {
       this.$store.commit("toSearch", false);
       const { data } = await this.$http.getPrivateArticle();
-      console.log('data', data)
       this.$store.commit("searchArticles", data.data ? data.data : []);
     },
     searchAll() {
@@ -75,12 +70,16 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import url("@/assets/less/index.less");
+
 .left-menu {
-  position: absolute;
-  left: 0;
+  position: relative;
+  inset: auto;
   width: 200px;
-  height: 600px;
+  height: 100%;
+  min-height: @main-height;
   border-right: 0 !important;
+  background-color: rgba(81, 88, 105, 0.94);
 
   /deep/ .el-submenu__title {
     width: 200px;
@@ -91,6 +90,7 @@ export default {
   }
 
   /deep/ .el-menu {
+    height: 100%;
     border-right: 0;
   }
 

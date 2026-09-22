@@ -35,28 +35,30 @@ export default {
 <style lang="less" scoped>
 @import url("@/assets/less/index.less");
 .me-view {
-  position: absolute;
-  top: 102px;
-  left: 20px;
-  width: 1496px;
-  height: 600px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+  margin-top: 20px;
+  width: 100%;
+  height: @main-height;
   .me-menu {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 300px;
-    height: 600px;
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 100%;
     border-radius: 10px 0 0 10px;
     background-color: #626878;
     overflow: hidden;
   }
   .me-main {
-    position: absolute;
-    right: 0;
-    top: 0;
+    position: relative;
+    inset: auto;
+    min-width: 0;
     padding: 20px;
-    width: 1296px;
-    height: 600px;
+    width: 100%;
+    height: 100%;
     border-radius: 0 10px 10px 0;
     background-color: #fff;
     overflow: scroll;
@@ -73,5 +75,10 @@ export default {
     line-height: 40px;
     color: #ffffff;
   }
+}
+@media (max-width: 768px) {
+  .me-view { grid-template-columns: 1fr; height: auto; }
+  .me-view .me-menu { position: relative; width: 100%; height: auto; border-radius: 12px 12px 0 0; }
+  .me-view .me-main { position: relative; width: 100%; height: auto; min-height: 520px; border-radius: 0 0 12px 12px; }
 }
 </style>

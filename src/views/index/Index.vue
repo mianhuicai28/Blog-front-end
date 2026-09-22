@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="page-layout home-page">
     <!-- 用户信息 -->
     <div class="right-aside">
       <div class="intro">
@@ -28,6 +28,7 @@
       <div class="main-show-view" ref="shows">
         <Article-list
           :articles="$store.state.ArticleIsAll ? articles : searchArticles"
+          :loading="loading"
         ></Article-list>
 
         <el-backtop target=".main-show-view" :right="40" :bottom="60">
@@ -42,7 +43,6 @@
 import LeftMenu from "@/components/left-menu/Left-menu.vue";
 import ArticleList from "@/components/article-list/article-list.vue";
 import moment from "moment";
-import dayjs from "dayjs";
 import "moment/locale/zh-cn";
 moment.locale("zh-cn");
 export default {
@@ -50,6 +50,7 @@ export default {
     return {
       page_index: 0,
       value: new Date(),
+      loading: false,
     };
   },
   computed: {
@@ -63,41 +64,40 @@ export default {
   methods: {
     async getUserInfo() {
       const { data } = await this.$http.getUserInfo();
-      // console.log(data.data._doc);
-      if (data.status === 0) {
-        const userinfo = data.data;
-        this.$store.commit("getUserInfo", userinfo);
-        this.$store.commit("ctrlIndex", this.page_index);
-      } else {
-        return console.log("请先登录");
-      }
+      if (data.status === 0) this.$store.commit("getUserInfo", data.data);
     },
     async getAllArticle() {
-      const { data } = await this.$http.getAllArticle();
-      this.$store.commit("getAllArticle", data.data);
+      this.loading = true;
+      try {
+        const { data } = await this.$http.getAllArticle();
+        const articles = Array.isArray(data.data) ? data.data : [];
+        this.$store.commit("searchArticles", articles);
+        this.$store.commit("getAllArticle", articles);
+      } catch (_) {
+        this.$store.commit("searchArticles", []);
+        this.$store.commit("getAllArticle", []);
+      } finally {
+        this.loading = false;
+      }
     },
-    onPanelChange(value, mode) {
-      console.log(value);
-      console.log(mode);
-    },
+    onPanelChange() {},
     async select(val) {
       this.$store.commit("toSearch", false);
       const query = moment(val).format("YYYY[年]MM[月]DD[日]");
-      const { data } = await this.$http.searchByTime(
-        this.$qs.stringify({ time: query })
-      );
-      console.log(data);
-      this.$store.commit("searchArticles", data.data);
+      try {
+        const { data } = await this.$http.searchByTime(
+          this.$qs.stringify({ time: query })
+        );
+        this.$store.commit("searchArticles", data.data || []);
+      } catch (_) {
+        this.$store.commit("searchArticles", []);
+      }
     },
-    change(val) {
-      console.log(val);
-    },
+    change() {},
   },
-  async created() {
+  created() {
     this.$store.commit("ctrlIndex", this.page_index);
-    const { data } = await this.$http.getAllArticle();
-    this.$store.commit("searchArticles", data.data);
-    this.$store.commit("getAllArticle", data.data);
+    this.getAllArticle();
   },
   async activated() {
     this.$store.commit("ctrlIndex", this.page_index);
@@ -115,7 +115,7 @@ export default {
 @import url("ant-design-vue/dist/antd.css");
 @import url("@/assets/less/index.less");
 .right-aside {
-  height: 600px !important;
+  height: @main-height;
   background: none !important;
   padding: 0;
   .intro {
@@ -149,17 +149,19 @@ export default {
 }
 .main {
   padding: 0;
-  .row();
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: stretch;
   .main-show-view {
     .column();
     align-items: center;
-    position: absolute;
-    right: 0;
-    width: 976px;
-    height: 600px;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    height: @main-height;
     overflow-y: scroll;
     padding: 20px;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: transparent;
     // background-color: rgba(244, 245, 245, 0.95);
     .back-top {
       height: 100%;
@@ -174,5 +176,11 @@ export default {
     }
     .minScroller();
   }
+}
+@media (max-width: 980px) {
+  .home-page > .right-aside { display: none; }
+  .home-page > .main { grid-row: 1; grid-template-columns: minmax(0, 1fr); margin-top: 0; padding: 0; }
+  .main /deep/ .left-menu { display: none; }
+  .main .main-show-view { position: relative; inset: auto; width: 100%; height: auto; min-height: 500px; padding: 14px; }
 }
 </style>

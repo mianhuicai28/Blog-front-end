@@ -7,7 +7,7 @@
 
     <div class="center-view">
       <!-- 登录 -->
-      <div class="login-view">
+      <div class="login-view" :class="{ 'mobile-hidden': toSignUp }">
         <p>Sign In</p>
         <div class="input-item">
           <img src="@/assets/img/username.png" alt="" />
@@ -33,7 +33,7 @@
         <div class="tip-view"></div>
       </div>
       <!-- 注册 -->
-      <div class="register-view">
+      <div class="register-view" :class="{ 'mobile-hidden': !toSignUp }">
         <p>Sign Up</p>
         <div class="input-item">
           <img src="@/assets/img/username.png" alt="" />
@@ -248,8 +248,9 @@ export default {
 }
 .main-view {
   .column();
-  width: 800px;
+  width: 100%;
   min-height: 600px;
+  margin-top: 20px;
   align-items: center;
   justify-content: center;
   position: relative;
@@ -434,6 +435,46 @@ export default {
           opacity: 0.8;
           transform: scale(0.98);
         }
+      }
+    }
+  }
+}
+@media (max-width: 680px) {
+  .main-view {
+    width: 100%;
+    min-height: 100vh;
+    padding: 28px 0;
+    justify-content: flex-start;
+    .tit-view {
+      position: relative;
+      top: auto;
+      margin-bottom: 28px;
+      text-align: center;
+      p { margin: 0 0 8px; font-size: 34px; }
+      span { font-size: 16px; }
+    }
+    .center-view {
+      width: 100%;
+      min-width: 0;
+      padding: 24px;
+      flex-direction: column;
+      background: rgba(25, 35, 57, .94);
+      .login-view,
+      .register-view { width: 100%; }
+      .mobile-hidden { display: none; }
+      .input-item input { width: calc(100% - 42px); margin-right: 0; }
+      .in-btn { width: calc(100% - 42px); margin-left: 42px; }
+      .shadow {
+        position: relative;
+        inset: auto;
+        order: 3;
+        width: 100%;
+        height: auto;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255,255,255,.12);
+        background: transparent;
+        .btn { width: 100%; background: transparent; border: 1px solid rgb(223,188,79); color: rgb(223,188,79); }
       }
     }
   }

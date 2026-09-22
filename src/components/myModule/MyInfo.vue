@@ -133,8 +133,8 @@ export default {
         reader.onload = () => {
           this.iconBase64 = reader.result;
         };
-        reader.onerror = function (error) {
-          console.log("Error: ", error);
+        reader.onerror = () => {
+          this.$message.error("图片读取失败，请重新选择");
         };
       }
     },
@@ -143,7 +143,6 @@ export default {
     },
     async save() {
       const res_email = this.regexp_email.test(this.userinfo.email);
-      console.log(this.userinfo);
       if (
         !res_email ||
         this.userinfo.name === "" ||
@@ -207,9 +206,9 @@ export default {
     font-size: 1rem;
     margin-bottom: 15px;
     /deep/ .el-textarea {
-      width: 600px;
+      width: min(600px, calc(100% - 120px));
       .el-textarea__inner {
-        width: 600px;
+        width: 100%;
       }
     }
   }
@@ -242,10 +241,18 @@ export default {
   }
 }
 .btn-view {
-  width: 300px;
-  margin-left: 100px;
+  width: min(360px, 100%);
+  margin-left: 120px;
   .row();
   align-items: center;
   justify-content: space-between;
+}
+@media (max-width: 640px) {
+  .user-info > div:not(.info-tit) { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .user-info span { width: auto; text-align: left; margin: 0; }
+  .user-info .user-name /deep/ .el-input,
+  .user-info .user-email /deep/ .el-input,
+  .user-info .user-intro /deep/ .el-textarea { width: 100%; }
+  .btn-view { margin-left: 0; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
 }
 </style>

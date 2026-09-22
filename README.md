@@ -1,4 +1,6 @@
-# web
+# For Front End Blog
+
+Vue 2 front end for the blog demo.
 
 ## Project setup
 ```
@@ -15,5 +17,6 @@ npm run serve
 npm run build
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+The development site runs at `http://127.0.0.1:8080`. By default it connects
+to `http://127.0.0.1:3000`; copy `.env.example` to `.env.local` to override the
+API address.

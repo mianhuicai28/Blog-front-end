@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="page-layout editor-page">
     <!-- 右aside -->
     <div class="right-aside">
       <div class="info-view">
@@ -128,7 +128,7 @@ export default {
           type: "warning",
         });
       }
-      if (this.new_content === "") {
+      if (this.new_content === "" || this.new_content === this.handbook) {
         return this.$message.warning({
           showClose: true,
           message: "内容不可以为空哦",
@@ -149,11 +149,13 @@ export default {
       );
       const { data } = await this.$http.publishArticle(new_article);
       if (data.status === 0) {
-        // const newArticle = data.data;
-        // this.$store.commit("addArticle", newArticle);
         this.$message.success({
           showClose: true,
           message: data.tip,
+        });
+        this.$router.push({
+          name: "detail",
+          query: { id: data.data._id, author_id: data.data.author_id },
         });
       }
     },
@@ -205,18 +207,16 @@ export default {
           showClose: true,
           message: data.tip,
         });
+        this.$router.push("/me/my_article");
       }
     },
-    save(e) {
-      console.log(e);
-    },
+    save() {},
     change(e, res) {
       // console.log(e);
       this.new_content = e;
     },
-    getTags(val) {
-      console.log(val);
-      this.new_tags = val;
+    getTags(tags) {
+      this.new_tags = tags;
     },
     getContent(val) {
       this.new_content = val;
@@ -263,7 +263,7 @@ export default {
 <style lang="less" scoped>
 @import url("@/assets/less/index.less");
 /deep/ .markdown-body {
-  width: 1136px;
+  width: 100%;
   min-height: 560px;
 }
 /deep/ .v-show-content {
@@ -272,12 +272,12 @@ export default {
 .main {
   overflow-y: auto;
   overflow-x: auto;
-  height: 600px !important;
+  height: @main-height;
   overflow: scroll;
   .noneScroller();
 }
 .right-aside {
-  height: 600px !important;
+  height: @main-height;
   align-items: center;
   .info-view {
     width: 260px;
@@ -355,5 +355,36 @@ export default {
       opacity: 0.8;
     }
   }
+}
+.editor-page > .main,
+.editor-page > .right-aside { position: relative; inset: auto; width: 100%; margin: 0; }
+.editor-page > .main { min-width: 0; padding: 0; overflow: hidden; }
+.editor-page > .right-aside { padding: 20px; }
+.editor-page /deep/ .v-note-wrapper { width: 100%; min-width: 0; min-height: 100%; z-index: 1; }
+
+@media (max-width: 980px) {
+  .editor-page > .right-aside { height: auto; align-items: stretch; padding: 16px; }
+  .editor-page > .right-aside .info-view {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .editor-page > .right-aside .info-view .tit,
+  .editor-page > .right-aside .info-view .tag,
+  .editor-page > .right-aside .info-view .intro { width: 100%; margin: 0; }
+  .editor-page > .right-aside .sumbit { position: static; width: 100%; margin-top: 14px; }
+  .editor-page > .main { grid-row: 2; height: 620px; }
+}
+@media (max-width: 680px) {
+  .editor-page > .right-aside .info-view { grid-template-columns: 1fr; }
+  .editor-page > .main { height: 560px; }
+  .editor-page /deep/ .v-note-op { overflow-x: auto; overflow-y: hidden; }
+  .editor-page /deep/ .v-note-panel { display: block; }
+  .editor-page /deep/ .v-note-edit,
+  .editor-page /deep/ .v-note-show { width: 100% !important; }
+  .editor-page /deep/ .v-note-show { display: none; }
 }
 </style>
